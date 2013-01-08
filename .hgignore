@@ -1,0 +1,9 @@
+syntax: glob
+*.exe
+*.zip
+*.o
+*.a
+*.dll
+*.bak
+*.pyc
+NULL
