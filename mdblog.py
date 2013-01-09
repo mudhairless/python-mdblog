@@ -125,6 +125,35 @@ def writeTags():
             wh.write('</ul>')
         wh.write('</body></html>')
 
+def archiveList(l):
+    al = l
+    al.sort(key= lambda c : c.finfo['ctime'])
+    al.reverse()
+    dlist = dict()
+    for i in al:
+        d = dt.datetime.fromtimestamp(i.createdTime())
+        dyear = str(d.year)
+        dmon = d.strftime("%B")
+        if dlist.has_key(dyear) == False:
+            dlist[dyear] = dict()
+        if dlist[dyear].has_key(dmon) == False:
+            dlist[dyear][dmon] = []
+        dlist[dyear][dmon].append(i)
+    return dlist
+
+#TODO: make more generic so can be used to generate for specified timeframe
+def makeArchive():
+    al = archiveList(garticles.values())
+    with open('out/archive.html','wb') as fh:
+        fh.write('<html><head><title>Archive | ' + gconfig['site_title'] + '</title></head><body>')
+        for y in al:
+            fh.write('<h1>'+str(y)+'</h1>')
+            for m in al[y]:
+                fh.write("<h2>"+str(m)+'</h2>')
+                for i in al[y][m]:
+                    fh.write('<a href="'+articlelinks[i.finfo['filename']]+'">'+i.title()+'</a><br />')
+        fh.write('</body></html>')
+
 def main():
     c = getArticles()
     if os.path.exists('out') == False:
@@ -137,6 +166,7 @@ def main():
         with open('out/'+urllib.unquote(articlelinks[f]),'wb') as fh:
             fh.write(out)
     writeTags()
+    makeArchive()
 
 
 if __name__ == '__main__':
