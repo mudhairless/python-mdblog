@@ -1,0 +1,10 @@
+{
+"template": "basic.html",
+"base_url": "http://sample.url.com",
+"author": "Joe Blogger",
+"date_format":"%c",
+"site_title": "Adventures in blogging",
+"macros": {
+    "copy":"Copyright"
+    }
+}

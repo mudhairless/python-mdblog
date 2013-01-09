@@ -5,10 +5,12 @@ import string
 import datetime as dt
 import json
 import urllib
+import re
 
 gtags = dict()
 articlelinks = dict()
 gconfig = dict()
+garticles = dict()
 
 class Article:
     def create(self,f):
@@ -19,30 +21,40 @@ class Article:
             articlelinks[f] = urllib.quote(self.finfo['title']) + ".html"
             self.finfo['tags'] = map(string.strip,fh.readline().split(','))
             self.addGlobalTags()
-            if os.path.exists('cache/' + f + '.html'):
-                #if cache'd file is older than raw then update it
-                cstat = os.stat('cache/' + f + '.html')
-                cmtime = dt.datetime.fromtimestamp(cstat.st_mtime)
-                mtime = dt.datetime.fromtimestamp(statr.st_mtime)
-                if mtime > cmtime:
-                    with open('cache/' + f + '.html','wb') as ch:
-                        self.content = md.markdown(fh.read())
-                        ch.write(self.content)
-                else:
-                    with open('cache/' + f + '.html','rb') as ch:
-                        self.content = ch.read()
+            self.content = fh.read()
+
+    def updateCache(self):
+        f = self.finfo['filename']
+        if os.path.exists('cache/' + f + '.html'):
+            #if cache'd file is older than raw then update it
+            cstat = os.stat('cache/' + f + '.html')
+            cmtime = dt.datetime.fromtimestamp(cstat.st_mtime)
+            mtime = dt.datetime.fromtimestamp(self.finfo['mtime'])
+            if mtime > cmtime:
+                with open('cache/' + f + '.html','wb') as ch:
+                    self.content = md.markdown(self.content)
+                    ch.write(self.content)
             else:
-                self.content = md.markdown(fh.read())
-                if os.path.exists('cache') == False:
-                    os.mkdir('cache')
+                with open('cache/' + f + '.html','rb') as ch:
+                    self.content = ch.read()
+        else:
+            self.content = md.markdown(self.content)
+            if os.path.exists('cache') == False:
+                os.mkdir('cache')
                 with open('cache/' + f + '.html','wb') as ch:
                     ch.write(self.content)
-            self.expandMacros()
+
 
     def expandMacros(self):
         for m in gconfig['macros']:
             e = gconfig['macros'][m]
-            self.content = string.replace(self.content,m,e)
+            self.content = string.replace(self.content,'{'+m+'}',e)
+            tempx = self.content
+        for lx in re.finditer('\{link:(?P<file>.*\.md)\}',tempx):
+            lx_file = string.strip(lx.groups()[0]).encode('utf-8')
+            lx_repl = lx.group(0)
+            lx_html = '<a href="'+string.strip(articlelinks[lx_file])+'">'+garticles[lx_file].title()+'</a>'
+            self.content = string.replace(tempx,lx_repl,lx_html)
 
     def addGlobalTags(self):
         for t in self.finfo['tags']:
@@ -70,16 +82,62 @@ def filterFiles(path):
 
 def getArticles():
     global gconfig
+    global garticles
     try:
         with open('config.json','rb') as fp:
             gconfig = json.load(fp)
     except IOError:
         tcon = dict()
     flist = filter(filterFiles, os.listdir(os.curdir))
-    articles = dict()
     for f in flist:
-        articles[f] = Article()
-        articles[f].create(f)
-    return articles
+        garticles[f] = Article()
+        garticles[f].create(f)
+    for a in garticles:
+        garticles[a].expandMacros()
+        garticles[a].updateCache()
+    return garticles
+
+def processTags(art):
+    xheader = ' <a href="categories.html#'
+    xmid = '">'
+    xend = '</a>'
+    ret = ''
+    for t in art.finfo['tags']:
+        ret = ret + xheader + t + xmid + t + xend
+    return ret
+
+def prepareArticle(tout,art):
+    xout = string.replace(tout,'{site_title}',gconfig['site_title'])
+    xout = string.replace(xout,'{title}',art.title())
+    xout = string.replace(xout,'{author}',gconfig['author'])
+    xout = string.replace(xout,'{date}',dt.datetime.fromtimestamp(art.modifiedTime()).strftime(gconfig['date_format']))
+    xout = string.replace(xout,'{tags}',processTags(art))
+    #content replacement occurs last
+    return string.replace(xout,'{article}',art.content)
+
+def writeTags():
+    with open('out/categories.html','wb') as wh:
+        wh.write('<html><title>Categories | ' + gconfig['site_title'] + '</title><body>')
+        for t in gtags:
+            wh.write('<a name="'+t+'"><h3>'+t+'</h3></a><ul>')
+            for f in gtags[t]:
+                wh.write('<li><a href="'+articlelinks[f]+'">'+garticles[f].title()+'</a></li>')
+            wh.write('</ul>')
+        wh.write('</body></html>')
+
+def main():
+    c = getArticles()
+    if os.path.exists('out') == False:
+        os.mkdir('out')
+    for f in c:
+        art = c[f]
+        with open(gconfig['template'],'rb') as rh:
+            tout = rh.read()
+        out = prepareArticle(tout,art)
+        with open('out/'+urllib.unquote(articlelinks[f]),'wb') as fh:
+            fh.write(out)
+    writeTags()
 
 
+if __name__ == '__main__':
+    main()
