@@ -168,6 +168,7 @@ def main():
     writeTags()
     makeArchive()
 
-
+#TODO: move articles to articles directory, templates etc...
+#TODO: generate index page
 if __name__ == '__main__':
     main()
