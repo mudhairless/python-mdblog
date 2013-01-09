@@ -7,3 +7,4 @@ syntax: glob
 *.bak
 *.pyc
 NULL
+cache/*
