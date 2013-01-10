@@ -1,0 +1,11 @@
+{
+    "article":"<html><head><title>{title} | {site-title}</title></head><body><h1>{title}</h1><div id=\"byline\"><p>Posted {date} by <em>{author}</em></p></div><div id=\"content\">{article}</div><div id=\"tags\"><p>Filed under: {tags}</p></div><div id=\"footer\">{copy}</div></body></html>",
+    "taglist": {
+        "base":"<html><head><title>Post Categories of {site-title}</title></head><body>{body}<div id=\"footer\">{copy}</div></body></html>",
+        "section-start":"<a name=\"{tag}\"><h3>{tag}</h3></a><div>",
+        "list-header":"<ul>",
+        "list-item":"<li><a href=\"{link}\">{link-title}</a></li>",
+        "list-footer":"</ul>",
+        "section-end":"</div>"
+        }
+}

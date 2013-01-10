@@ -1,11 +1,19 @@
 {
-"template": "basic.html",
-"base_url": "http://sample.url.com",
+"template": "basic",
+"base-url": "http://sample.url.com",
 "author": "Joe Blogger",
-"date_format":"%c",
-"index_count":5,
-"site_title": "Adventures in blogging",
+"date-format":"%c",
+"index-count":5,
+"site-title": "Adventures in blogging",
 "macros": {
-    "copy":"Copyright"
+    "copy":"Copyright &copy; {year} {author}"
+    },
+"pages": {
+    "tags": "categories.html",
+    "archive": "archive.html",
+    "about": {
+        "output": "about.html",
+        "input":"about.md"
+        }
     }
 }
