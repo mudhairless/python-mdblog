@@ -4,10 +4,8 @@
 "author": "Joe Blogger",
 "date-format":"%c",
 "index-count":5,
+"index-teaser-length":2,
 "site-title": "Adventures in blogging",
-"macros": {
-    "copy":"Copyright &copy; {year} {author}"
-    },
 "pages": {
     "tags": "categories.html",
     "archive": "archive.html",

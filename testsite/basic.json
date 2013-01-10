@@ -1,11 +1,25 @@
 {
-    "article":"<html><head><title>{title} | {site-title}</title></head><body><h1>{title}</h1><div id=\"byline\"><p>Posted {date} by <em>{author}</em></p></div><div id=\"content\">{article}</div><div id=\"tags\"><p>Filed under: {tags}</p></div><div id=\"footer\">{copy}</div></body></html>",
+    "article":"{tpage-head-start}{title} | {site-title}{tpage-head-end}{header}<h2>{title}</h2><div id=\"byline\"><p>Posted {date} by <em>{author}</em></p></div><div id=\"content\">{article}</div><div id=\"tags\"><p>Filed under: {tags}</p><p><a href=\"{permalink}\">Permalink</a></p></div>{footer}{html-end}",
     "taglist": {
-        "base":"<html><head><title>Post Categories of {site-title}</title></head><body>{body}<div id=\"footer\">{copy}</div></body></html>",
+        "base":"{tpage-head-start}Post Categories of {site-title}{tpage-head-end}{header}<h2>Post Categories</h2><div id=\"content\">{body}</div>{footer}{html-end}",
         "section-start":"<a name=\"{tag}\"><h3>{tag}</h3></a><div>",
         "list-header":"<ul>",
         "list-item":"<li><a href=\"{link}\">{link-title}</a></li>",
         "list-footer":"</ul>",
         "section-end":"</div>"
-        }
+        },
+    "index": {
+        "base":"{tpage-head-start}{site-title}{tpage-head-end}{header}<h2>Recent Posts</h2><div id=\"content\">{body}</div><div id=\"more\"><a href=\"{page-archive}\">Archives</a></div>{footer}{html-end}",
+        "list-header":"<div id=\"entry-title\">",
+        "list-item":"<h2><a href=\"{link}\">{post-title}</a></h2><div id=\"entry-teaser\">{post-teaser}</div>",
+        "list-footer":"</div>"
+    },
+    "macros": {
+        "header":"<div id=\"header\"><h1><a href=\"{page-index}\">{site-title}</a></h1></div>",
+        "footer":"<div id=\"footer\">{copy}</div>",
+        "copy":"Copyright &copy; {year} {author}",
+        "tpage-head-start":"<html><head><title>",
+        "tpage-head-end":"</title></head><body>",
+        "html-end":"</body></html>"
+    }
 }

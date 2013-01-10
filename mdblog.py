@@ -6,15 +6,17 @@ import datetime as dt
 import json
 import urllib
 import re
+import uuid
 
 gtags = dict()
 articlelinks = dict()
 gconfig = dict()
 garticles = dict()
 gtemplate = dict()
+gartids = dict()
 
 default_about_file = """
-{author} hasn't written their about page yet!
+{author-name} hasn't written their about page yet!
 """
 
 default_config_file = """
@@ -24,12 +26,10 @@ default_config_file = """
 "author": "Joe Blogger",
 "date-format":"%c",
 "index-count":5,
+"index-teaser-length":2,
 "site-title": "Adventures in blogging",
-"macros": {
-    "copy":"Copyright &copy; {year} {author}"
-    },
 "pages": {
-    "tags": "catgories.html",
+    "tags": "categories.html",
     "archive": "archive.html",
     "about": {
         "output": "about.html",
@@ -41,21 +41,37 @@ default_config_file = """
 
 default_template_file = """
 {
-    "article":"<html><head><title>{title} | {site-title}</title></head><body><h1>{title}</h1><div id=\"byline\"><p>Posted {date} by <em>{author}</em></p></div><div id=\"content\">{article}</div><div id=\"tags\"><p>Filed under: {tags}</p></div><div id=\"footer\">{copy}</div></body></html>",
+    "article":"{tpage-head-start}{title} | {site-title}{tpage-head-end}{header}<h2>{title}</h2><div id=\"byline\"><p>Posted {date} by <em>{author}</em></p></div><div id=\"content\">{article}</div><div id=\"tags\"><p>Filed under: {tags}</p><p><a href=\"{permalink}\">Permalink</a></p></div>{footer}{html-end}",
     "taglist": {
-        "base":"<html><head><title>Post Categories of {site-title}</title></head><body>{body}<div id=\"footer\">{copy}</div></body></html>",
+        "base":"{tpage-head-start}Post Categories of {site-title}{tpage-head-end}{header}<h2>Post Categories</h2><div id=\"content\">{body}</div>{footer}{html-end}",
         "section-start":"<a name=\"{tag}\"><h3>{tag}</h3></a><div>",
         "list-header":"<ul>",
         "list-item":"<li><a href=\"{link}\">{link-title}</a></li>",
         "list-footer":"</ul>",
         "section-end":"</div>"
-        }
+        },
+    "index": {
+        "base":"{tpage-head-start}{site-title}{tpage-head-end}{header}<h2>Recent Posts</h2><div id=\"content\">{body}</div><div id=\"more\"><a href=\"{page-archive}\">Archives</a></div>{footer}{html-end}",
+        "list-header":"<div id=\"entry-title\">",
+        "list-item":"<h2><a href=\"{link}\">{post-title}</a></h2><div id=\"entry-teaser\">{post-teaser}</div>",
+        "list-footer":"</div>"
+    },
+    "macros": {
+        "header":"<div id=\"header\"><h1><a href=\"{page-index}\">{site-title}</a></h1></div>",
+        "footer":"<div id=\"footer\">{copy}</div>",
+        "copy":"Copyright &copy; {year} {author}",
+        "tpage-head-start":"<html><head><title>",
+        "tpage-head-end":"</title></head><body>",
+        "html-end":"</body></html>"
+    }
 }
 """
 
 class Article:
     def create(self,f):
         statr = os.stat(f)
+        if f not in gartids:
+            gartids[f] = str(uuid.uuid4())
         self.finfo = {'filename': f,'ctime': statr.st_ctime,'mtime': statr.st_mtime }
         with open(f,'rb') as fh:
             self.finfo['title'] = string.strip(fh.readline())
@@ -155,9 +171,7 @@ def processTags(art):
     return ret
 
 def prepareArticle(tout,art):
-    xout = string.replace(tout,'{site-title}',gconfig['site-title'])
-    xout = string.replace(xout,'{title}',art.title())
-    xout = string.replace(xout,'{author}',gconfig['author'])
+    xout = string.replace(tout,'{title}',art.title())
     xout = string.replace(xout,'{date}',dt.datetime.fromtimestamp(art.modifiedTime()).strftime(gconfig['date-format']))
     xout = string.replace(xout,'{tags}',processTags(art))
     #content replacement occurs last
@@ -186,8 +200,7 @@ def writeTags():
         listout = listout + listend
         listout = listout + endsection
 
-    output = string.replace(base,'{site-title}',gconfig['site-title'])
-    output = string.replace(output,'{body}',listout)
+    output = string.replace(base,'{body}',listout)
     output = expandMacros(output)
     with open('out/'+gconfig['pages']['tags'],'wb') as wh:
         wh.write(output)
@@ -253,11 +266,18 @@ def loadDefaults():
     if gconfig.has_key('macros'):
         gconfig['macros']['year'] = d.strftime('%Y')
         gconfig['macros']['build-time'] = d.strftime(gconfig['date-format'])
-        gconfig['macros']['author'] = gconfig['author']
+        gconfig['macros']['author'] = '<a href="'+gconfig['pages']['about']['output']+'">'+gconfig['author']+'</a>'
+        gconfig['macros']['author-name'] = gconfig['author']
         gconfig['macros']['base-href'] = gconfig['base-url']
         gconfig['macros']['site-title'] = gconfig['site-title']
+        gconfig['macros']['page-index'] = 'index.html'
+        gconfig['macros']['page-about'] = gconfig['pages']['about']['output']
+        gconfig['macros']['page-tags'] = gconfig['pages']['tags']
+        gconfig['macros']['page-archive'] = gconfig['pages']['archive']
     else:
         gconfig['macros'] = dict()
+        if gtemplate.has_key('macros'):
+            gconfig['macros'].update(gtemplate['macros'])
         loadDefaults()
 
 def genAboutPage():
@@ -265,19 +285,65 @@ def genAboutPage():
     with open(gconfig['pages']['about']['input'],'rb') as fp:
         page_content = md.markdown(fp.read())
     xout = string.replace(gtemplate['article'],'{article}',page_content)
-    xout = string.replace(xout,'{site-title}',gconfig['site-title'])
-    xout = string.replace(xout,'{title}','About {author}')
-    xout = string.replace(xout,'{author}',gconfig['author'])
+    xout = string.replace(xout,'{title}','About ' + gconfig['author'])
     xout = string.replace(xout,'{date}',dt.datetime.now().strftime(gconfig['date-format']))
     xout = string.replace(xout,'{tags}','<em>About Page</em>')
+    gconfig['macros']['page-id'] = 'About Page'
+    gconfig['macros']['permalink'] = string.replace(gconfig['base-url'] + '/' + gconfig['pages']['about']['output'],' ','%20')
     xout = expandMacros(xout)
+    gconfig['macros']['page-id'] = ''
+    gconfig['macros']['permalink'] = ''
     with open('out/'+gconfig['pages']['about']['output'],'wb') as fp:
         fp.write(xout)
 
+def buildTeaser(t):
+    l = t.split("</p>")
+    pc = gconfig['index-teaser-length'] - 1
+    out = ''
+    if pc > len(l):
+        pc = len(l) - 1
+    if pc < 0:
+        pc = 0
+    count = 0
+    while count <= pc:
+        out = out + l[count] + '</p>'
+        count = count + 1
+    return string.replace(out,'</p></p>','</p>')
+
+def genIndexPage():
+    index_list = []
+    al = archiveList(garticles.values())
+    for y in al:
+        for m in al[y]:
+            for a in al[y][m]:
+                if len(index_list) < gconfig['index-count']:
+                    index_list.append(a)
+
+    out = gtemplate['index']['base']
+
+    list_out = ''
+    for a in index_list:
+        list_out = list_out + gtemplate['index']['list-header']
+        post_title = a.title()
+        post_link = articlelinks[a.finfo['filename']]
+        post_teaser = buildTeaser(a.content)
+        list_out = list_out + gtemplate['index']['list-item']
+        list_out = list_out + gtemplate['index']['list-footer']
+        list_out = string.replace(list_out,'{link}',post_link)
+        list_out = string.replace(list_out,'{post-title}',post_title)
+        list_out = string.replace(list_out,'{post-teaser}',post_teaser)
+
+    out = string.replace(out,'{body}',list_out)
+    out = expandMacros(out)
+
+    with open('out/index.html','wb') as fp:
+        fp.write(out)
 
 def main():
     global gtemplate
     global gconfig
+    global gartids
+
     try:
         with open('config.json','rb') as fp:
             gconfig = json.load(fp)
@@ -290,21 +356,39 @@ def main():
         with open('about.md','wb') as fa:
             fa.write(default_about_file)
         exit()
+
+    with open(gconfig['template']+'.json','rb') as fp:
+        gtemplate = json.load(fp)
+
+    try:
+        with open('index.json','rb') as fp:
+            gartids = json.load(fp)
+    except IOError:
+        pass
+
     loadDefaults()
     c = getArticles()
     if os.path.exists('out') == False:
         os.mkdir('out')
     for f in c:
         art = c[f]
-        with open(gconfig['template']+'.json','rb') as fp:
-            gtemplate = json.load(fp)
+        gconfig['macros']['page-id'] = gartids[art.finfo['filename']]
+        gconfig['macros']['permalink'] = string.replace(gconfig['base-url'] + '/' + articlelinks[f],' ','%20')
         out = expandMacros(prepareArticle(gtemplate['article'],art))
+        gconfig['macros']['page-id'] = ''
+        gconfig['macros']['permalink'] = ''
         with open('out/'+urllib.unquote(articlelinks[f]),'wb') as fh:
             fh.write(out)
     writeTags()
     makeArchive()
     genAboutPage()
+    genIndexPage()
+    writeAinfo()
 
-#TODO: generate index page
+def writeAinfo():
+    with open('index.json','wb') as fp:
+        json.dump(gartids,fp)
+
+
 if __name__ == '__main__':
     main()
