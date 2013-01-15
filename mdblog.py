@@ -18,6 +18,8 @@
 #
 #    The included 'basic' theme is hereby released into the public domain
 
+import sys
+import logging
 import markdown as md
 import os
 import string
@@ -26,6 +28,14 @@ import json
 import urllib
 import re
 import uuid
+
+log = logging.getLogger('mdblog')
+log.setLevel(logging.INFO)
+flogger = logging.FileHandler('mdblog.log')
+flogger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+flogger.setFormatter(formatter)
+log.addHandler(flogger)
 
 gtags = dict()
 articlelinks = dict()
@@ -480,5 +490,10 @@ def writeAinfo():
 
 #TODO: files are not being cached
 #TODO: only generate html when updates necessary (articles only)
+#TODO: add logging in the code
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except:
+        print('An error has occurred, check "mdblog.log" for details!')
+        log.exception('Unhandled Exception caught, traceback follows.')
