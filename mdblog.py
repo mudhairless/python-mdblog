@@ -128,6 +128,7 @@ class Article:
                 with open('cache/' + f + '.html','wb') as ch:
                     self.content = md.markdown(self.content)
                     ch.write(self.content)
+                    log.info('updating cache for file: ' + f)
             else:
                 with open('cache/' + f + '.html','rb') as ch:
                     self.content = ch.read()
@@ -135,8 +136,9 @@ class Article:
             self.content = md.markdown(self.content)
             if os.path.exists('cache') == False:
                 os.mkdir('cache')
-                with open('cache/' + f + '.html','wb') as ch:
-                    ch.write(self.content)
+            with open('cache/' + f + '.html','wb') as ch:
+                ch.write(self.content)
+                log.info('creating cache for file: ' + f)
 
 
     def expandMacros(self):
@@ -488,12 +490,16 @@ def writeAinfo():
     with open('index.json','wb') as fp:
         json.dump(gartids,fp)
 
-#TODO: files are not being cached
+
 #TODO: only generate html when updates necessary (articles only)
 #TODO: add logging in the code
 if __name__ == '__main__':
     try:
+        start_time = dt.datetime.now().strftime('%c')
+        log.info('Starting run @ ' + start_time)
         main()
+        end_time = dt.datetime.now().strftime('%c')
+        log.info('Run ended @ ' + end_time + ' Total: ' + str(len(garticles)) + ' entries.')
     except:
         print('An error has occurred, check "mdblog.log" for details!')
         log.exception('Unhandled Exception caught, traceback follows.')

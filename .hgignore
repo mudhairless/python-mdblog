@@ -11,3 +11,4 @@ NULL
 cache/*
 index.json
 article*.md
+*.log
