@@ -1,3 +1,4 @@
+#!/bin/env python
 import string
 import time
 import os
@@ -34,10 +35,13 @@ def genArticles(n):
         afile = string.replace('articles/article{n}.md','{n}',str(count))
         with open(afile,'wb') as fp:
             writeIpsum(fp)
-        filedate = datetime.datetime(random.randrange(2000,2012),random.randrange(1,12),random.randrange(1,30),random.randrange(1,24),random.randrange(1,60),random.randrange(1,60))
+        filedate = datetime.datetime(random.randrange(2000,2012),random.randrange(1,12),random.randrange(1,28),random.randrange(1,24),random.randrange(1,60),random.randrange(1,60))
         fdts = time.mktime(filedate.timetuple())
         os.utime(afile,(fdts,fdts))
         count = count + 1
 
 if __name__ == '__main__':
-    genArticles(50)
+    #has been tested up to ~4800 articles, took ~1.5 minutes to write to disk, ~11 minutes to process
+    articles = 100
+    print('Generating ' + str(articles) + ' articles, may take some time...')
+    genArticles(articles)
