@@ -199,8 +199,8 @@ def writeTags():
             listout = listout + tlistitem
         listout = listout + listend
         listout = listout + endsection
-
-    output = string.replace(base,'{body}',listout)
+    output = string.replace(base,'{title}','Tag List')
+    output = string.replace(output,'{body}',listout)
     output = expandMacros(output)
     with open('out/'+gconfig['pages']['tags'],'wb') as wh:
         wh.write(output)
@@ -221,18 +221,24 @@ def archiveList(l):
         dlist[dyear][dmon].append(i)
     return dlist
 
-#TODO: make more generic so can be used to generate for specified timeframe
 def makeArchive():
     al = archiveList(garticles.values())
+    out = string.replace(gtemplate['taglist']['base'],'{title}','Archive')
+    body = ''
+    for y in al:
+        body = body + string.replace(gtemplate['taglist']['section-start'],'{tag}',str(y))
+        for m in al[y]:
+            body = body + string.replace(gtemplate['taglist']['section-start'],'{tag}',str(m))
+            body = body + gtemplate['taglist']['list-header']
+            for i in al[y][m]:
+                xbody = string.replace(gtemplate['taglist']['list-item'],'{link}',articlelinks[i.finfo['filename']])
+                body = body + string.replace(xbody,'{link-title}',i.title())
+            body = body + gtemplate['taglist']['list-footer']
+        body = body + gtemplate['taglist']['section-end']
+    out = string.replace(out,'{body}',body)
+    out = expandMacros(out)
     with open('out/'+gconfig['pages']['archive'],'wb') as fh:
-        fh.write('<html><head><title>Archive | ' + gconfig['site-title'] + '</title></head><body>')
-        for y in al:
-            fh.write('<h1>'+str(y)+'</h1>')
-            for m in al[y]:
-                fh.write("<h2>"+str(m)+'</h2>')
-                for i in al[y][m]:
-                    fh.write('<a href="'+articlelinks[i.finfo['filename']]+'">'+i.title()+'</a><br />')
-        fh.write('</body></html>')
+        fh.write(out)
 
 def loadDefaults():
     global gconfig
