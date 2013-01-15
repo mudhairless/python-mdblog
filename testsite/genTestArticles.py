@@ -42,6 +42,6 @@ def genArticles(n):
 
 if __name__ == '__main__':
     #has been tested up to ~4800 articles, took ~1.5 minutes to write to disk, ~11 minutes to process
-    articles = 100
+    articles = 25
     print('Generating ' + str(articles) + ' articles, may take some time...')
     genArticles(articles)
