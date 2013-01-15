@@ -10,3 +10,4 @@ NULL
 *.html
 cache/*
 index.json
+article*.md

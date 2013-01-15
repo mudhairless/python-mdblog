@@ -134,6 +134,8 @@ def expandMacros(text):
         tempx = string.replace(tempx,lx_repl,lx_html)
 
     if re.search('\{*?\}',tempx) != None:
+        if re.search('$$debug',tempx) != None:
+            print(tempx)
         tempx = expandMacros(tempx)
 
     return tempx
@@ -230,6 +232,7 @@ def makeArchive():
     al_keys.sort()
     al_keys.reverse()
     months = ['January','February','March','April','May','June','July','August','September','October','November','December']
+    months.reverse()
     for y in al_keys:
         body = body + string.replace(gtemplate['taglist']['section-start'],'{tag}',str(y))
         for m in months:
@@ -333,13 +336,20 @@ def genIndexPage():
     for y in al:
         for m in al[y]:
             for a in al[y][m]:
-                if len(index_list) < gconfig['index-count']:
-                    index_list.append(a)
-
+                #if len(index_list) < gconfig['index-count']:
+                index_list.append(a)
+    index_list.sort( key=lambda x: x.createdTime())
+    index_list.reverse()
     out = gtemplate['index']['base']
 
+    tcount = len(index_list)
+    count = 0
+    ccount = 0
+    pcount = 0
+
     list_out = ''
-    for a in index_list:
+    while count < tcount:
+        a = index_list[count]
         list_out = list_out + gtemplate['index']['list-header']
         post_title = a.title()
         post_link = articlelinks[a.finfo['filename']]
@@ -349,12 +359,47 @@ def genIndexPage():
         list_out = string.replace(list_out,'{link}',post_link)
         list_out = string.replace(list_out,'{post-title}',post_title)
         list_out = string.replace(list_out,'{post-teaser}',post_teaser)
+        if ccount == gconfig['index-count']-1 or count == (tcount-1):
+            ccount = 0
+            if pcount == 0:
+                fname = 'out/index.html'
+            else:
+                fname = string.replace('out/index{n}.html','{n}',str(pcount))
+            fout = string.replace(out,'{body}',list_out + genIndexLinks(pcount,tcount))
+            fout = expandMacros(fout)
+            with open(fname,'wb') as fp:
+                fp.write(fout)
+            pcount = pcount + 1
+            list_out = ''
+        count = count + 1
+        ccount = ccount + 1
 
-    out = string.replace(out,'{body}',list_out)
-    out = expandMacros(out)
+def genIndexLinks(pcount,tcount):
+    maxp = tcount / (gconfig['index-count']-1)
+    wrapper = gtemplate['index']['links']['wrapper']
+    if pcount == 0:
+        nlinkr = '#'
+    else:
+        if pcount == 1:
+            nlinkr = 'index.html'
+        else:
+            nlinkr = 'index' + str(pcount-1)+'.html'
 
-    with open('out/index.html','wb') as fp:
-        fp.write(out)
+    nlink = string.replace(gtemplate['index']['links']['next-page'],'{link}',nlinkr)
+
+    if pcount == (maxp-1):
+        plinkr = '#'
+    else:
+        plinkr = 'index' + str(pcount+1)+'.html'
+
+    plink = string.replace(gtemplate['index']['links']['prev-page'],'{link}',plinkr)
+
+    archive = string.replace(gtemplate['index']['links']['archive'],'{link}',gconfig['pages']['archive'])
+    out = string.replace(wrapper,'{next-page}',nlink)
+    fout = string.replace(out,'{prev-page}',plink)
+    ret = string.replace(fout,'{archive}',archive)
+
+    return ret
 
 def main():
     global gtemplate
