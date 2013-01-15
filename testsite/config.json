@@ -5,6 +5,7 @@
 "date-format":"%c",
 "index-count":5,
 "index-teaser-length":2,
+"link-name-about":true,
 "site-title": "Adventures in blogging",
 "pages": {
     "tags": "categories.html",

@@ -272,7 +272,10 @@ def loadDefaults():
     if gconfig.has_key('macros'):
         gconfig['macros']['year'] = d.strftime('%Y')
         gconfig['macros']['build-time'] = d.strftime(gconfig['date-format'])
-        gconfig['macros']['author'] = '<a href="'+gconfig['pages']['about']['output']+'">'+gconfig['author']+'</a>'
+        if gconfig.has_key('link-name-about') & gconfig['link-name-about'] == True:
+            gconfig['macros']['author'] = '<a href="'+gconfig['pages']['about']['output']+'">'+gconfig['author']+'</a>'
+        else:
+            gconfig['macros']['author'] = gconfig['author']
         gconfig['macros']['author-name'] = gconfig['author']
         gconfig['macros']['base-href'] = gconfig['base-url']
         gconfig['macros']['site-title'] = gconfig['site-title']
