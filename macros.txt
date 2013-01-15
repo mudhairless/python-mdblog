@@ -1,0 +1,16 @@
+macro                   replacement value
+-----------------------------------------
+{author}
+{author-name}
+{title}
+{site-title}
+{page-index}
+{page-about}
+{page-tags}
+{page-archive}
+{base-href}
+{build-time}
+{year}
+{page-id}
+{permalink}
+{date}
