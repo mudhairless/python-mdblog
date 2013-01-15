@@ -72,7 +72,7 @@ class Article:
         statr = os.stat(f)
         if f not in gartids:
             gartids[f] = str(uuid.uuid4())
-        self.finfo = {'filename': f,'ctime': statr.st_ctime,'mtime': statr.st_mtime }
+        self.finfo = {'filename': f,'ctime': statr.st_atime,'mtime': statr.st_mtime }
         with open(f,'rb') as fh:
             self.finfo['title'] = string.strip(fh.readline())
             articlelinks[f] = urllib.quote(self.finfo['title']) + ".html"
@@ -201,6 +201,7 @@ def writeTags():
         listout = listout + endsection
     output = string.replace(base,'{title}','Tag List')
     output = string.replace(output,'{body}',listout)
+    output = string.replace(output,'{posted-date}','')
     output = expandMacros(output)
     with open('out/'+gconfig['pages']['tags'],'wb') as wh:
         wh.write(output)
@@ -225,15 +226,22 @@ def makeArchive():
     al = archiveList(garticles.values())
     out = string.replace(gtemplate['taglist']['base'],'{title}','Archive')
     body = ''
-    for y in al:
+    al_keys = al.keys()
+    al_keys.sort()
+    al_keys.reverse()
+    months = ['January','February','March','April','May','June','July','August','September','October','November','December']
+    for y in al_keys:
         body = body + string.replace(gtemplate['taglist']['section-start'],'{tag}',str(y))
-        for m in al[y]:
-            body = body + string.replace(gtemplate['taglist']['section-start'],'{tag}',str(m))
-            body = body + gtemplate['taglist']['list-header']
-            for i in al[y][m]:
-                xbody = string.replace(gtemplate['taglist']['list-item'],'{link}',articlelinks[i.finfo['filename']])
-                body = body + string.replace(xbody,'{link-title}',i.title())
-            body = body + gtemplate['taglist']['list-footer']
+        for m in months:
+            if al[y].has_key(m):
+                body = body + string.replace(gtemplate['taglist']['section-start'],'{tag}',str(m))
+                body = body + gtemplate['taglist']['list-header']
+                for i in al[y][m]:
+                    ida = dt.datetime.fromtimestamp(i.createdTime())
+                    xbody = string.replace(gtemplate['taglist']['list-item'],'{link}',articlelinks[i.finfo['filename']])
+                    body = body + string.replace(xbody,'{link-title}',i.title())
+                    body = string.replace(body,'{posted-date}',ida.strftime(gconfig['date-format']))
+                body = body + gtemplate['taglist']['list-footer']
         body = body + gtemplate['taglist']['section-end']
     out = string.replace(out,'{body}',body)
     out = expandMacros(out)
