@@ -1,4 +1,23 @@
-#mdblog
+#!/bin/env python
+#    mdblog - static 'blog' site creator
+#    Copyright (C) 2013 Ebben Feagan
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+#    The included 'basic' theme is hereby released into the public domain
+
 import markdown as md
 import os
 import string
@@ -27,6 +46,7 @@ default_config_file = """
 "date-format":"%c",
 "index-count":5,
 "index-teaser-length":2,
+"link-name-about":true,
 "site-title": "Adventures in blogging",
 "pages": {
     "tags": "categories.html",
@@ -41,9 +61,9 @@ default_config_file = """
 
 default_template_file = """
 {
-    "article":"{tpage-head-start}{title} | {site-title}{tpage-head-end}{header}<h2>{title}</h2><div id=\"byline\"><p>Posted {date} by <em>{author}</em></p></div><div id=\"content\">{article}</div><div id=\"tags\"><p>Filed under: {tags}</p><p><a href=\"{permalink}\">Permalink</a></p></div>{footer}{html-end}",
+    "article":"{tpage-head-start}{title} | {site-title}{tpage-head-end}{header}<h2>{title}</h2><div class=\"byline\"><p>Posted {date} by <em>{author}</em></p></div><div class=\"content\">{article}</div><div class=\"tags\"><p>Filed under: {tags}</p><p><a href=\"{permalink}\">Permalink</a></p></div>{footer}{html-end}",
     "taglist": {
-        "base":"{tpage-head-start}Post Categories of {site-title}{tpage-head-end}{header}<h2>Post Categories</h2><div id=\"content\">{body}</div>{footer}{html-end}",
+        "base":"{tpage-head-start}{title} | {site-title}{tpage-head-end}{header}<h2>{title}</h2><div class=\"content\">{body}</div>{footer}{html-end}",
         "section-start":"<a name=\"{tag}\"><h3>{tag}</h3></a><div>",
         "list-header":"<ul>",
         "list-item":"<li><a href=\"{link}\">{link-title}</a></li>",
@@ -51,14 +71,21 @@ default_template_file = """
         "section-end":"</div>"
         },
     "index": {
-        "base":"{tpage-head-start}{site-title}{tpage-head-end}{header}<h2>Recent Posts</h2><div id=\"content\">{body}</div><div id=\"more\"><a href=\"{page-archive}\">Archives</a></div>{footer}{html-end}",
-        "list-header":"<div id=\"entry-title\">",
-        "list-item":"<h2><a href=\"{link}\">{post-title}</a></h2><div id=\"entry-teaser\">{post-teaser}</div>",
-        "list-footer":"</div>"
+        "base":"{tpage-head-start}{site-title}{tpage-head-end}{header}<h2>{site-slogan}</h2><div class=\"content\">{body}</div>{footer}{html-end}",
+        "list-header":"<div class=\"entry-title\">",
+        "list-item":"<h2><a href=\"{link}\">{post-title}</a></h2><div class=\"entry-teaser\">{post-teaser}</div>",
+        "list-footer":"</div>",
+        "links": {
+            "archive":"<div class=\"pagelink\"><a href=\"{link}\">Archive</a></div>",
+            "next-page":"<div class=\"pagelink\"><a href=\"{link}\">Newer Posts</a></div>",
+            "prev-page":"<div class=\"pagelink\"><a href=\"{link}\">Older Posts</a></div>",
+            "wrapper":"<div class=\"paginationlinks\"{prev-page}{archive}{next-page}</div>"
+        }
     },
     "macros": {
-        "header":"<div id=\"header\"><h1><a href=\"{page-index}\">{site-title}</a></h1></div>",
-        "footer":"<div id=\"footer\">{copy}</div>",
+        "site-slogan":"Experiencing Life, through code!",
+        "header":"<div class=\"header\"><h1><a href=\"{page-index}\">{site-title}</a></h1></div>",
+        "footer":"<div class=\"footer\">{copy}</div>",
         "copy":"Copyright &copy; {year} {author}",
         "tpage-head-start":"<html><head><title>",
         "tpage-head-end":"</title></head><body>",
@@ -451,6 +478,7 @@ def writeAinfo():
     with open('index.json','wb') as fp:
         json.dump(gartids,fp)
 
-
+#TODO: files are not being cached
+#TODO: only generate html when updates necessary (articles only)
 if __name__ == '__main__':
     main()
